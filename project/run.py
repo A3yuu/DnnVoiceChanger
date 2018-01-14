@@ -5,7 +5,8 @@ from itertools import chain
 from tensorflow.python.keras.models import load_model
 
 import pyaudio
-
+import sys
+sys.path.append('src')
 from proc import *
 
 #データ
