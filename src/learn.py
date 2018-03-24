@@ -5,94 +5,39 @@
 #plaidml.keras.install_backend()
 
 import numpy as np
-#from pylab import *
-from scipy import signal, interpolate
-from scipy.io.wavfile import read
 
 import tensorflow as tf
+from tensorflow.python.keras.layers import *
+from tensorflow.python.keras.regularizers import l2
+from tensorflow.python.keras.models import Model
+from tensorflow.python.keras.optimizers import *
 
 from proc import *
 
 #データ
-dataLen = 54
-dataBufLen = 1000
-dataStep = 100
-inData = []
-outData = []
-#FFT
-minWaveLen = 70
-maxWaveLen = 500
-stepWaveLen = 1
-
-#データ読み込み
-names = ["あ.wav","い.wav","う.wav","え.wav","お.wav","か.wav","が.wav","き.wav","ぎ.wav","く.wav","ぐ.wav","け.wav","げ.wav","こ.wav","ご.wav","さ.wav","ざ.wav","し.wav","じ.wav","す.wav","ず.wav","せ.wav","ぜ.wav","そ.wav","ぞ.wav","た.wav","だ.wav","ち.wav","つ.wav","て.wav","で.wav","と.wav","ど.wav","な.wav","に.wav","ぬ.wav","ね.wav","の.wav","は.wav","ば.wav","ぱ.wav","ひ.wav","び.wav","ぴ.wav","ふ.wav","ぶ.wav","ぷ.wav","へ.wav","べ.wav","ぺ.wav","ほ.wav","ぼ.wav","ぽ.wav","ま.wav","み.wav","む.wav","め.wav","も.wav","や.wav","ゆ.wav","よ.wav","ら.wav","り.wav","る.wav","れ.wav","ろ.wav","わ.wav","ん.wav"]
-#names = ["あ.wav","い.wav","う.wav","え.wav","お.wav"]
-#names = ["あ.wav"]
-paths = ["i/","o/","c/"]
-
-#フーリエ窓関数定義
-waveLengthList = range(minWaveLen, maxWaveLen ,stepWaveLen)
-stftX = makeStftWindow(dataBufLen, waveLengthList)
-#学習データ作成
-for name in names:
-	dataPoint = 0
-	#入力データ
-	fsIn, dataIn = read(paths[0] + name)
-	#教師データ
-	fsOut, dataOut = read(paths[1] + name)
-	#ループ
-	for dataPoint in range(0, min(len(dataIn), len(dataOut))-dataBufLen, dataStep):
-		#入力データ
-		waveDnnIn, orgLen, waveMean, waveStd = procWave(dataIn, dataPoint, dataBufLen, dataLen, waveLengthList, stftX)
-		if waveDnnIn is None:
-			print("miss")
-			continue
-		#教師データ
-		waveDnnOut, orgLen, waveMean, waveStd = procWave(dataOut, dataPoint, dataBufLen, dataLen, waveLengthList, stftX)
-		if waveDnnOut is None:
-			print("miss")
-			continue
-		#スタック
-		inData.append(waveDnnIn)
-		outData.append(waveDnnOut)
-
-#tftest
-#nums = [
-#	(64,7),
-#	(64,5),
-#	(64,3),
-#	]
-#inData = np.array(inData)
-#outData = np.array(outData)
-#inData = inData.reshape((len(inData),dataLen,1))
-#outData = outData.reshape((len(outData),dataLen,1))
-#import tensorflow as tf
-#sess = tf.InteractiveSession()
-#x = tf.placeholder(tf.float32, shape=[None, dataLen, 1])
-#y = tf.placeholder(tf.float32, shape=[None, dataLen, 1])
-#f = x
-#for num, k in nums:
-#	w =tf.Variable(tf.truncated_normal([num, k, 1]), dtype=tf.float32)
-#	f = tf.nn.conv1d(f, w, padding='SAME', stride=1)
-#nums.reverse()
-#for num, k in nums:
-#	w =tf.Variable(tf.truncated_normal([num, k, 1]), dtype=tf.float32)
-#	f = tf.nn.conv1d(f, w, padding='SAME', stride=1)
-#w =tf.Variable(tf.truncated_normal([1, 3, 1]), dtype=tf.float32)
-#f = tf.nn.conv1d(f, w, padding='SAME', stride=1)
-#loss = tf.reduce_mean(tf.abs(f - y))
-#optimizer = tf.train.GradientDescentOptimizer(0.5)
-#train = optimizer.minimize(loss)
-#sess = tf.Session()
-#sess.run(tf.global_variables_initializer())
-#for step in range(201):
-#	sess.run(train, feed_dict={x: inData, y: outData})
-#	print(loss.eval(session=sess, feed_dict={x: inData, y: outData}))
-#sess.close()
+dataPathIn = ['dataX0w64F.npy']
+dataPathOut = ['dataY0w64F.npy']
+modelPath = ['model0w64F.h5py', 'model0w64F.weights']
+dataLen = 64
 
 #学習モデル構築
-inData = np.array(inData)
-outData = np.array(outData)
+for path in dataPathIn:
+	if 'inData' in locals():
+		inData = np.append(inData, np.load(path), axis=0)
+	else:
+		inData = np.load(path)
+for path in dataPathOut:
+	if 'outData' in locals():
+		outData = np.append(outData, np.load(path), axis=0)
+	else:
+		outData = np.load(path)
+print(inData)
+print(outData)
+#データ飛ばし
+#inData = inData[0::100]
+#outData = outData[0::100]
+#inData = inData[0:len(inData)//30]
+#outData = outData[0:len(outData)//30]
 #二次元化
 #dim = 2
 #R = inData.real
@@ -106,70 +51,95 @@ outData = np.array(outData)
 #outData[:,:,0] = R
 #outData[:,:,1] = I
 #大きさのみ
-dim = 1
-inData = inData.real.reshape((len(inData),dataLen,1))
-outData = outData.real.reshape((len(outData),dataLen,1))
-#時間領域
 #dim = 1
-#inData = inData.reshape((len(inData),dataLen,1))
+#inData = inData.real.reshape((len(inData),dataLen,1))
+#outData = outData.real.reshape((len(outData),dataLen,1))
+#時間領域
+dim = 1
+inData = inData.reshape((len(inData),dataLen,1))
 #outData = outData.reshape((len(outData),dataLen,1))
-nums = [
-	(64,7),
-	(64,5),
-	(64,3),
-	]
-layerTimes = 3
-ks = 3 #3 17
-input = tf.keras.layers.Input(shape=(dataLen,dim))
+#定数
+input = Input(shape=(dataLen,dim))
+#DenseNet
+#blocks = 3
+#filters = 16
+#growth = 4
+#denseLayers = 4
+#pooling = 8
+#kernelSize = 7
+#def DenseBlock(x, layers, filters, growth, kernel):
+#	features = [x]
+#	for i in range(layers):
+#		x = Convolution1D(filters, kernel, padding="same", use_bias=False)(x)
+#		features.append(x)
+#		x = concatenate(features)
+#		filters += growth
+#	return x, filters
+#def DenseNet(x, blocks, pooling, layers, filters, growth, kernel):
+#	for i in range(blocks):
+#		x, filters = DenseBlock(x, layers, filters, growth, kernel)
+#		x = LeakyReLU(alpha=0.1)(x)
+#		#x = BatchNormalization()(x)
+#		x = MaxPooling1D(pooling)(x)
+#	x = Conv1D(pooling**blocks, 1, kernel_initializer='he_normal')(x)
+#	x = Activation('linear')(x) #tanh,linear
+#	x = Flatten()(x)
+#	#x = Dense(dataLen)(x)
+#	#x = BatchNormalization()(x)
+#	return x
+#x = DenseNet(input, blocks, pooling, denseLayers, filters, growth, kernelSize)
+#CNN
+blocks = 3
+filters = 128
+growth = 2
+pooling = 4
+kernelSize = 7
+#blocks = 4
+#filters = 64
+#growth = 2
+#pooling = 4
+#kernelSize = 7
 x = input
-for num, k in nums:
-	x = tf.keras.layers.Conv1D(num, k, activation='relu', padding='same')(x)
-	x = tf.keras.layers.MaxPooling1D(layerTimes, padding='same')(x)
-nums.reverse()
-for num, k in nums:
-	x = tf.keras.layers.Conv1D(num, k, activation='relu', padding='same')(x)
-	x = tf.keras.layers.UpSampling1D(layerTimes)(x)
-x = tf.keras.layers.Conv1D(dim, ks, activation='sigmoid', padding='same')(x)
-x = tf.keras.layers.BatchNormalization()(x)
+for i in range(blocks):
+	x = Conv1D(filters*(growth**i), kernelSize, padding='same', use_bias=False, activation="relu")(x)
+	#x = Conv1D(filters*(growth*(i+1)), kernelSize, padding='same', use_bias=False, activation="relu")(x)
+	x = BatchNormalization()(x)
+	#x = LeakyReLU(alpha=0.1)(x)
+	x = MaxPooling1D(pooling)(x)
+	#x = AveragePooling1D(pooling)(x)
+x = Conv1D(pooling**blocks, 1, kernel_initializer='he_normal')(x)
+x = Activation('linear')(x)
+#x = Conv1D(dataLen, 1, use_bias=False, activation="relu")(x)
+#x = MaxPooling1D(dataLen//(pooling**blocks))(x)
+x = Flatten()(x)
+#Autoencoder
+#blocks = 4
+#filters = 16
+#kernelSize = 7
+#pooling = 4
+#x = input
+#for i in range(blocks):
+#	x = Conv1D(filters, kernelSize, padding='same', use_bias=False, activation="relu")(x)
+#	x = MaxPooling1D(pooling)(x)
+#for i in range(blocks):
+#	x = Conv1D(filters, kernelSize, padding='same', use_bias=False, activation="relu")(x)
+#	x = UpSampling1D(pooling)(x)
+#x = Conv1D(1, 1, padding='same', use_bias=False, activation="relu")(x)
+#x = Flatten()(x)
+#RUN
 model = tf.keras.Model(inputs=input, outputs=x)
-model.compile(optimizer='adam', loss='mean_squared_error')
+model.summary()
+model.save(modelPath[0])
+#前回重みロード(なければコメントアウト)
+#model.load_weights(modelPath[1])
 
 #Run
-history = model.fit(inData, outData, epochs=100, verbose=1)
-#Save
-model.save('model.h5py')
-model.save_weights('model.weights');
-
-##学習モデル構築
-#dim = 1
-#inData = np.array(inData)
-#outData = np.array(outData)
-#inData = inData.reshape((len(inData),dataLen,1))
-#outData = outData.reshape((len(outData),dataLen,1))
-#nums = [
-#	(64,7),
-#	(64,5),
-#	(64,3),
-#	]
-#layerTimes = 4
-#ks = 3 #3 17
-#model = Sequential()
-#model.add(Layer(input_shape=(dataLen,dim)))
-##model.add(BatchNormalization(input_shape=(dataLen,dim)))
-#for num, k in nums:
-#	model.add(Conv1D(num, k, activation='relu', padding='same'))
-#	model.add(MaxPooling1D(layerTimes, padding='same'))
-#nums.reverse()
-#for num, k in nums:
-#	model.add(Conv1D(num, k, activation='relu', padding='same'))
-#	model.add(UpSampling1D(layerTimes))
-#model.add(Conv1D(dim, ks, activation='sigmoid', padding='same'))
-##model.add(Dense(1, activation="sigmoid"))
-#model.add(BatchNormalization())
-#model.compile(optimizer='adam', loss='mean_squared_error')
-#
-##Run
-#history = model.fit(inData, outData, epochs=1000, verbose=1)
-##Save
-#model.save('model.h5')
-#model.save_weights('model.weights');
+#model.compile(optimizer=Adamax(lr = 1e-5), loss='mean_squared_error')
+#history = model.fit(inData, outData, epochs=1, verbose=1)
+model.compile(optimizer=Adamax(lr = 0.001, decay=0), loss='mean_squared_error')
+#epochss = [1,3,6,10,10,10,20,20,20,100,100,100,100,100,100,100,100,100]
+#epochss = [1,4,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5]
+epochss = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+for i in epochss:
+	history = model.fit(inData, outData, epochs=i, verbose=1)
+	model.save_weights(modelPath[1])

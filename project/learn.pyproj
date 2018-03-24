@@ -4,7 +4,8 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>2d8a6d26-5f54-4043-9ae4-93bc1a7f4313</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>learn.py</StartupFile>
+    <StartupFile>
+    </StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>../</WorkingDirectory>

@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2020
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "fft", "project\fft.pyproj", "{6536AF7F-B252-4E90-BD24-70A1FE9740E0}"
-EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "learn", "project\learn.pyproj", "{2D8A6D26-5F54-4043-9AE4-93BC1A7F4313}"
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "run", "project\run.pyproj", "{630A990D-4702-46FD-BBF0-9B410227E52E}"
@@ -14,6 +12,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{36B3256D-B0D5-44BF-A595-ACF292794582}"
 	ProjectSection(SolutionItems) = preProject
 		src\proc.py = src\proc.py
+		data\低音.ust = data\低音.ust
+		data\高音.ust = data\高音.ust
 	EndProjectSection
 EndProject
 Global
@@ -22,8 +22,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{6536AF7F-B252-4E90-BD24-70A1FE9740E0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6536AF7F-B252-4E90-BD24-70A1FE9740E0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D8A6D26-5F54-4043-9AE4-93BC1A7F4313}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2D8A6D26-5F54-4043-9AE4-93BC1A7F4313}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{630A990D-4702-46FD-BBF0-9B410227E52E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

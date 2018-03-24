@@ -9,9 +9,12 @@ import pyaudio
 from proc import *
 
 #データ
-dataLen = 54
-dataBufLen = 1000
+dataLen = 256
+dataBufLen = 1024
 audioBufLen = 20000
+waveCount = 0
+octave = 1
+fft = True
 #FFT
 minWaveLen = 200
 maxWaveLen = 450
@@ -56,9 +59,9 @@ def callback(dataRaw, frame_count, time_info, status):
 	return(None, pyaudio.paContinue)
 
 # モデルを読み込む
-model = load_model('model.h5py')
+model = load_model('model0w256F.h5py')
 # 学習結果を読み込む
-model.load_weights('model.weights')
+model.load_weights('model0w256F.weights')
 model.summary();
 model.compile(loss='categorical_crossentropy',optimizer='rmsprop',metrics=['accuracy'])
 
@@ -82,7 +85,7 @@ while True:
 	dataPointNow = dataPoint
 	lock = False
 	#音程
-	wave, orgLen, waveMean, waveStd = procWave(procData, dataPointNow, dataBufLen, dataLen, waveLengthList, stftX)
+	wave, orgLen, waveMean, waveStd = procWave(procData, dataPointNow, dataBufLen, dataLen, waveLengthList, stftX, n=waveCount, fft=fft)
 	if wave is None:
 		print("miss")
 		dataPoint += 100
@@ -93,14 +96,14 @@ while True:
 	#waveDnn = np.empty([1,dataLen,2]) #Fourier
 	#waveDnn[:,:,0]=wave.real #Fourier
 	#waveDnn[:,:,1]=wave.imag #Fourier
-	waveDnn = np.array(wave).real.reshape((1,dataLen,1)) #realのみ
-	#waveDnn = np.array(wave).reshape((1,dataLen,1)) #ノーマル
+	#waveDnn = np.array(wave).real.reshape((1,dataLen,1)) #realのみ
+	waveDnn = np.array(wave).reshape((1,dataLen,1)) #ノーマル
 	waveDnn = model.predict(waveDnn, verbose=0)
 	wave = waveDnn.reshape((dataLen)) #ノーマル & realのみ
 	#wave.real = waveDnn[:,:,0] #Fourier
 	#wave.imag = waveDnn[:,:,1] #Fourier
 	#フーリエ逆変換
-	wave = inverseWave(wave, orgLen, waveMean, waveStd, octave = 3, normalize = True)
+	wave = inverseWave(wave, orgLen, waveMean, waveStd, octave = octave, normalize = True, fft=fft)
 	#音質改善しない
 	wave = np.array(wave).astype(np.int16)
 	data = np.frombuffer(np.array(wave), dtype = "uint8")
